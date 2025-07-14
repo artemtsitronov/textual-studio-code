@@ -1,0 +1,18 @@
+DirectoryTree {
+    width: 20%;
+    border: round $primary;
+	layer: below;
+    transition: offset 500ms;
+    offset: 0 0;
+}
+
+DirectoryTree.compact {
+    offset: 0 0;
+    position: absolute;
+    layer: above;
+    width: 50%;
+}
+
+DirectoryTree.hidden {
+    offset: -100% 0;
+}

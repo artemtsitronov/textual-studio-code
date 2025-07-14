@@ -1,0 +1,10 @@
+TabbedContent {
+	padding: 1 2;
+	background: $surface;
+	height: 1fr;
+	layer: below;
+}
+
+TabbedContent CodeView {
+	border: none;
+}
