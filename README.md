@@ -6,6 +6,7 @@ A terminal-based code editor built with [Textual](https://github.com/Textualize/
 - Multi-tabbed interface for editing multiple files
 - Footer displaying current cursor position and selection status
 - Keyboard shortcuts for toggling UI and closing tabs
+- Markdown extended support.
 
 ---
 
@@ -18,12 +19,7 @@ A terminal-based code editor built with [Textual](https://github.com/Textualize/
   Open multiple files in tabs with a syntax-aware `CodeView`.
 
 - **Footer Status Bar**  
-  Shows line, column, and selection status dynamically.
-
-- **Keyboard Shortcuts**  
-  - `Ctrl+W` - Toggle compact mode (collapse directory tree)  
-  - `Ctrl+B` - Toggle directory tree visibility  
-  - `Ctrl+R` - Close the active tab  
+  Shows line, column, dynamically. 
 
 ---
 
@@ -55,9 +51,10 @@ If you want, you can open the directory tree in a specific folder,
 python cli.py [DIR_NAME]
 ```
 
+
 ---
 
 Thanks for everything!
 This project is still under developement, and many functions are not yet disponible.
 
-P.S. I, the creator of Textual Studio Code, do not recommend to use it YET. SO, stay tuned!
+P.S. I, the creator of Textual Studio Code, do NOT recommend to use it YET. SO, stay tuned!
