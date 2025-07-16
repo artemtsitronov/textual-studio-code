@@ -7,6 +7,7 @@ A terminal-based code editor built with [Textual](https://github.com/Textualize/
 - Footer displaying current cursor position and selection status
 - Keyboard shortcuts for toggling UI and closing tabs
 - Markdown extended support.
+- Saving functionality.
 
 ---
 
@@ -46,13 +47,12 @@ python cli.py
 ```
 
 If you want, you can open the directory tree in a specific folder,
-
 ```bash
 python cli.py [DIR_NAME]
 ```
 
-
 ---
 
 Thanks for everything!
-This project is still under developement, and many functions are not yet disponible.
+
+This project is still under development, and many functions are not yet disponible.
