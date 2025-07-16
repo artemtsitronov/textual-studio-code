@@ -18,6 +18,7 @@ class CodeView(TextArea):
     def on_mount(self) -> None:
         # Use a less frequent interval for better performance
         self.set_interval(0.2, self.check_cursor)
+        self.soft_wrap = True
     
     def check_cursor(self):
         current = self.cursor_location

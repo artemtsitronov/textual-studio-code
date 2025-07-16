@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.widgets import TabbedContent, TabPane, Static, Footer
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal
 from textual.reactive import var
 from textual.binding import Binding
 from textual.message import Message
@@ -8,6 +8,7 @@ from pathlib import Path
 import uuid
 import asyncio
 import json
+import shutil
 from typing import Dict, Optional
 from code_view import CodeView
 from directory_tree import DirectoryTree
@@ -24,12 +25,13 @@ class App(App):
         Binding("ctrl+w", "toggle_compact", "Toggle Compact Mode"),
         Binding("ctrl+b", "toggle_directory_tree", "Toggle Directory Tree"),
         Binding("ctrl+r", "remove_active_tab", "Remove Active Tab"),
-        Binding("ctrl+l", "toggle_markdown_mode", "Toggle Markdown Mode")
+        Binding("ctrl+l", "toggle_markdown_mode", "Toggle Markdown Mode"),
+        Binding("ctrl+s", "save", "Save File")
     ]
     
     compact: var[bool] = var(False)
     
-    def __init__(self, directory_path: str = "/home/evgenii"):
+    def __init__(self, directory_path: str = "."):
         super().__init__()
         self.directory_path = directory_path
         # Cache for file contents to avoid re-reading
@@ -56,15 +58,20 @@ Here are some simple basic bindings:
     - Ctrl + L: Toggles view mode in Markdown.
     - Ctrl + W: Toggles compact mode.
     - Ctrl + B: Toggles directory tree.
+    - Ctrl + S: Saves the current file.
 
 Compact mode is perfect for small terminal windows, and it also affects the Markdown's view mode.
 It changes it from MarkdownViewer to Markdown(removes the sidebar).
 
-What does it not have YET:
-    - It does not have file saving.
-    - It does not have so many things, that I recommend you another editor.
+What it now has:
+    - File saving functionality!
+    - Optimized file loading and caching.
+    - Smart content detection for different file types.
+    - Markdown support!
+    - Themes!
+    - And many(or few) others.
 
-I started this project 2 days ago, so, don't come to me why it doesn't have this and why doesn't have that.
+I started this project 5 days ago, so, don't come to me asking why it doesn't have this and why it doesn't have that.
 
 Artem Tsitronov. 2025.
 
@@ -137,6 +144,7 @@ Artem Tsitronov. 2025.
 
         except Exception as e:
             self.notify(f"Error loading language_map.json: {e}", severity="error")
+            return {}
     
     def load_file_content_sync(self, file_path: Path) -> Optional[str]:
         """Load file content synchronously with proper error handling"""
@@ -205,6 +213,78 @@ Artem Tsitronov. 2025.
     def get_language_from_extension(self, extension: str) -> str:
         """Get language identifier from file extension"""
         return self.language_map.get(extension.lower(), None)
+
+    def action_save(self) -> None:
+        """Save the content of the active tab to its corresponding file"""
+        tabbed_content = self.query_one("#tabbed_content", TabbedContent)
+        active_pane = tabbed_content.active_pane
+        
+        if active_pane is None:
+            self.notify("No active tab to save", severity="warning")
+            return
+        
+        # Skip saving the welcome tab
+        if active_pane.id == "welcome_tab":
+            self.notify("Cannot save welcome tab", severity="info")
+            return
+        
+        # Find the file path for this tab
+        file_path = None
+        tab_id = active_pane.id
+        
+        for tracked_file_path, tracked_tab_id in self._open_tabs.items():
+            if tracked_tab_id == tab_id:
+                file_path = tracked_file_path
+                break
+        
+        if file_path is None:
+            self.notify("Cannot determine file path for current tab", severity="error")
+            return
+        
+        try:
+            # Check if this is a MarkdownView or CodeView
+            content_widget = None
+            is_markdown_view = False
+            
+            try:
+                # Try to get MarkdownView first
+                content_widget = active_pane.query_one(MarkdownView)
+                is_markdown_view = True
+            except:
+                # If not found, try CodeView
+                try:
+                    content_widget = active_pane.query_one(CodeView)
+                    is_markdown_view = False
+                except Exception as e:
+                    self.notify(f"Could not find content widget: {e}", severity="error")
+                    return
+            
+            # Get content based on widget type
+            if is_markdown_view:
+                # For MarkdownView, get content from the CodeView inside it
+                code_view = content_widget.query_one("#code_view", CodeView)
+                content = code_view.text
+            else:
+                # For regular CodeView
+                content = content_widget.text
+            
+            # Write to file with UTF-8 encoding
+            file_path_obj = Path(file_path)
+            with open(file_path_obj, "w", encoding="utf-8") as f:
+                f.write(content)
+            
+            # Update cache with new content
+            self._file_cache[file_path] = content
+            
+            # If this is a MarkdownView, update all its internal views
+            if is_markdown_view:
+                content_widget.update_content(content)
+            
+            # Success notification
+            self.notify(f"Saved: {file_path_obj.name}", severity="info")
+            
+        except Exception as e:
+            self.notify(f"Error saving file: {e}", severity="error")
     
     def action_toggle_compact(self) -> None:
         self.compact = not self.compact
@@ -214,9 +294,9 @@ Artem Tsitronov. 2025.
         if not self.compact:
             directory_tree.remove_class("hidden")
 
-        if self.query("#markdown_switcher"):
-            markdown_switcher = self.query_one("#markdown_switcher")
-            markdown_switcher.current = "compact" if self.compact else "normal"
+        if self.query("#markdown"):
+            markdown_switcher = self.query_one("#markdown")
+            markdown_switcher.show_table_of_contents = not markdown_switcher.show_table_of_contents
     
     def action_toggle_directory_tree(self) -> None:
         directory_tree = self.query_one(DirectoryTree)
@@ -251,6 +331,21 @@ Artem Tsitronov. 2025.
 
         markdown_view = self.query_one(MarkdownView)
         markdown_view.current = "markdown" if self.markdown_mode else "code_view"
+
+    def setup_auto_save(self, interval_seconds: int = 5) -> None:
+        """Setup auto-save functionality (optional enhancement)"""
+        async def auto_save_task():
+            while True:
+                await asyncio.sleep(interval_seconds)
+                try:
+                    tabbed_content = self.query_one("#tabbed_content", TabbedContent)
+                    if tabbed_content.active_pane and tabbed_content.active_pane.id != "welcome_tab":
+                        self.action_save()
+                except Exception:
+                    pass  # Silently ignore auto-save errors
+        
+        # Uncomment the line below in __init__ if you want auto-save:
+        # asyncio.create_task(auto_save_task())
 
 def run_app(directory_path: str = "/home/evgenii"):
     app = App(directory_path)

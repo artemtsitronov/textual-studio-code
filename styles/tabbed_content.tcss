@@ -3,6 +3,7 @@ TabbedContent {
 	background: $surface;
 	height: 1fr;
 	layer: below;
+	width: 1fr;
 }
 
 TabbedContent CodeView {
