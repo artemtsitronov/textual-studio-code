@@ -1,3 +1,7 @@
+| Image 1 | Image 2 |
+|--------|--------|
+| ![](screenshots/img1.png) | ![](screenshots/img2.png) |
+
 # Textual Studio Code
 
 A terminal-based code editor built with [Textual](https://github.com/Textualize/textual), featuring:
