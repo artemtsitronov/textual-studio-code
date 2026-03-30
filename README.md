@@ -1,6 +1,6 @@
 | Image 1 | Image 2 |
 |--------|--------|
-| ![](screenshots/img1.png) | ![](screenshots/img2.png) |
+| ![](Screenshot%202026-03-30%20100545.png) | ![](Screenshot%202026-03-30%20100621.png) |
 
 # Textual Studio Code
 
